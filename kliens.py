@@ -4,7 +4,7 @@ import time
 import serial
 import lcddriver
 import json
-import urllib2
+import requests
 
 port =serial.Serial(
     "/dev/ttyUSB0",
@@ -22,12 +22,12 @@ def commWithServer(cardID):
           "cardId": ID
      }
 
-     req = urllib2.Request('http://hugo.premontrei.hu/api/v1/cardread')
-     req.add_header('Content-Type', 'application/json')
+     url = 'http://hugo.premontrei.hu/api/v1/cardread'
+     headers = {'Content-Type', 'application/json'}
 
-     response = urllib2.urlopen(req, json.dunps(data))
+     response = requests.post(url, data = json.dumps(data), headers = headers)
 
-     return response
+     return response.json()
 
 def printResToLcd(response):
      i = 0
@@ -52,8 +52,6 @@ lcd_rows = 4
 
 lastRead = time.time()
 
-lcdMsg('Erintsen kartyat\n a leolvasohoz!')
-
 while True:
      uid=port.read(16)
 
@@ -66,3 +64,5 @@ while True:
           print printResToLcd(response)
           
           lastRead = time.time()
+
+     time.sleep(0.1)
