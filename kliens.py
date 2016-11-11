@@ -3,6 +3,8 @@ import sys
 import time
 import serial
 import lcddriver
+import json
+import urllib2
 
 port =serial.Serial(
     "/dev/ttyUSB0",
@@ -13,50 +15,32 @@ port =serial.Serial(
     writeTimeout = 0,
     timeout = 1)
 
-def checkNet():
-     #check if there is internet connection
-     #if there is, return True, else return False
+def commWithServer(cardID):
+     ID = cardID.split('\n')[0]
+     data = {
+          "cardreaderId": "1",
+          "cardId": ID
+     }
 
-def lcdMsgClear(message, duration):
-     #lcd parancsokat atnezni!!!!!!!
-     lcdMsg(message)
+     req = urllib2.Request('http://hugo.premontrei.hu/api/v1/cardread')
+     req.add_header('Content-Type', 'application/json')
 
-     time.sleep(duration)
-     lcd.clear()
+     response = urllib2.urlopen(req, json.dunps(data))
 
-def lcdMsg(message):
-     #lcd parancsokat atnezni!!!!!!!
-     lcd.clear()
+     return response
 
-     messageArray = message.split('\n')
-     lines = len(messageArray)
-
-     i = 1
-     for i in range(lines):
-          if i = 4:
-               line = messageArray[i]
-
-               j = 1
-               for j in range(20-len(messageArray[i])-len(time.strftime("%B %d. %H:%M"))):
-                    line += ' '
-                    j += 1
-
-               line += time.strftime("%B %d. %H:%M")
-
-               lcd.message(line, i)
+def printResToLcd(response):
+     i = 0
+     for i in range(3):
+          line = response['output'][i]
+          if len(line) <= 20:
+               lcd.message(line, i+1)
           else:
-               lcd.message(messageArray[i], 1)
+               lcd.message(line[0:20], i+1)
 
           i += 1
 
-def displayTime():
-     if time.time()-lastTimeUpdate >= 60:
-          #ido kiirasa a jobb also sarokba
-
-def commWithServer(cardID, when):
-     #valami
-     menu = 'A' #A, vagy B
-     #return ehet-e? (T-F)
+     return response['status']
 
 print(port.isOpen())
 print("Com Port opened...")
@@ -70,54 +54,15 @@ lastRead = time.time()
 
 lcdMsg('Erintsen kartyat\n a leolvasohoz!')
 
-wasRead = False
-
-menu = 'C'
-
 while True:
      uid=port.read(16)
 
-     if checkNet() and wasNetOutage:
-          # ha volt netkimaradas es visszajott, akkor az addig evok adatainak feltoltese
-          #file.readlines() - beolvassa az osszes sort arraykent
-          eaters = open("eaters.txt", "r")
-
-          for eater in eaters:
-               #vegigmegy a sorokon es ha nem semmi a sor, akkor feltolti az adatokat
-               if eater not '':
-                    eaterId = eater.split(',')[0]
-                    eaterTime = eater.split(',')[1]
-
-                    commWithServer(eaterId, eaterTime)
-
-          eaters.close()
-
-          #file uritese
-          os.system("rm eaters.txt")
-
-     if uid == '':
-          if wasRead:
-          lcdMsg('Erintsd a kartyad\n a leolvasohoz!')
-          wasRead = False
-     else:
-          print 'Found card with UID: ' + str(uid)
+     if uid not '':
+          print 'Found card with UID: ' + str(uid.split('\n')[0])
           
-          if checkNet():
-               #beolvasott kod elkuldese a szervernek
-               if commWithServer(str(uid)):
-                    #ha ehet
-                    lcdMsgClear('Ehet, '+ menu + ' menu\nJo etvagyat! :)', 5)
-               else:
-                    lcdMsgClear('Nem ehet', 5)
+          #beolvasott kod elkuldese a szervernek
+          response = commWithServer(uid)
 
-               wasNetOutage = False
-          else:
-               wasNetOutage = True
-
-
-
-          lcdMsg('Kartya leolvasva\n' + str(uid))
-          wasRead = True
+          print printResToLcd(response)
           
-
           lastRead = time.time()
