@@ -17,10 +17,8 @@ port =serial.Serial(
 
 def commWithServer(cardID):
      ID = cardID.split('\n')[0]
-     data = {
-          "cardreaderId": "1",
-          "cardId": ID
-     }
+
+     adat = {"cardreaderId": "1", "cardId": ID}
 
      url = 'http://hugo.premontrei.hu/api/v1/cardread'
      headers = {'Content-Type', 'application/json'}
