@@ -16,25 +16,31 @@ port =serial.Serial(
     timeout = 1)
 
 def commWithServer(cardID):
-     ID = cardID.split('\n')[0]
+     url = 'http://hugo.premontrei.hu/api/v1/cardread'
+
+     ID = cardID[:16]
 
      adat = {"cardreaderId": "1", "cardId": ID}
 
-     url = 'http://hugo.premontrei.hu/api/v1/cardread'
-     headers = {'Content-Type', 'application/json'}
+     #adat = json.loads(adatStr)
 
-     response = requests.post(url, data = json.dumps(data), headers = headers)
+     headers = {"Content-Type": "application/json"}
+
+     response = requests.post(url, data = json.dumps(adat), headers=headers)
+
+     #print '\n' + str(response.json()) + '\n'
 
      return response.json()
 
 def printResToLcd(response):
+     lcd.lcd_clear()
      i = 0
-     for i in range(3):
+     for i in range(4):
           line = response['output'][i]
           if len(line) <= 20:
-               lcd.message(line, i+1)
+               lcd.lcd_message(line, i+1)
           else:
-               lcd.message(line[0:20], i+1)
+               lcd.lcd_message(line[:20], i+1)
 
           i += 1
 
@@ -53,11 +59,11 @@ lastRead = time.time()
 while True:
      uid=port.read(16)
 
-     if uid not '':
-          print 'Found card with UID: ' + str(uid.split('\n')[0])
+     if str(uid) != '' and str(uid) != '\n':
+          print 'Found card with UID: ' + str(uid)[:16]
           
           #beolvasott kod elkuldese a szervernek
-          response = commWithServer(uid)
+          response = commWithServer(str(uid))
 
           print printResToLcd(response)
           
