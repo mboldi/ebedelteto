@@ -83,7 +83,7 @@ class lcd:
       self.lcd_write_four_bits(mode | ((cmd << 4) & 0xF0))
 
    # put string function
-   def lcd_message(self, string, line):
+   def message(self, string, line):
       if line == 1:
          self.lcd_write(0x80)
       if line == 2:
@@ -97,6 +97,6 @@ class lcd:
          self.lcd_write(ord(char), Rs)
 
    # clear lcd and set to home
-   def lcd_clear(self):
+   def clear(self):
       self.lcd_write(LCD_CLEARDISPLAY)
       self.lcd_write(LCD_RETURNHOME)

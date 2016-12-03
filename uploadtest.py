@@ -1,7 +1,7 @@
 import requests
 import json
 
-url = 'http://hugo.premontrei.hu/api/v1/cardread'
+url = 'https://hugo.premontrei.hu/api/v1/cardread'
 
 ID = "0403020100000000"
 

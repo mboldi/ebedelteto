@@ -1,4 +1,3 @@
-import binascii
 import sys
 import time
 import serial
@@ -7,7 +6,8 @@ import json
 import requests
 
 port =serial.Serial(
-    "/dev/ttyUSB0",
+    port="/dev/ttyUSB0",
+    #port="/dev/ttyAMA0",
     baudrate=115200,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
@@ -16,13 +16,11 @@ port =serial.Serial(
     timeout = 1)
 
 def commWithServer(cardID):
-     url = 'http://hugo.premontrei.hu/api/v1/cardread'
+     url = 'https://hugo.premontrei.hu/api/v1/cardread'
 
      ID = cardID[:16]
 
      adat = {"cardreaderId": "1", "cardId": ID}
-
-     #adat = json.loads(adatStr)
 
      headers = {"Content-Type": "application/json"}
 
@@ -33,18 +31,22 @@ def commWithServer(cardID):
      return response.json()
 
 def printResToLcd(response):
-     lcd.lcd_clear()
+     lcd.clear()
      i = 0
      for i in range(4):
           line = response['output'][i]
           if len(line) <= 20:
-               lcd.lcd_message(line, i+1)
+               lcd.message(line, i+1)
           else:
-               lcd.lcd_message(line[:20], i+1)
+               lcd.message(line[:20], i+1)
 
           i += 1
 
      return response['status']
+
+def lcd_right(msg, line):
+     if len(msg):
+          pass
 
 print(port.isOpen())
 print("Com Port opened...")
@@ -54,12 +56,14 @@ lcd = lcddriver.lcd()
 lcd_columns = 20
 lcd_rows = 4
 
-lastRead = time.time()
+lastRead = time.time()-20
+
+wasprint = False
 
 while True:
      uid=port.read(16)
 
-     if str(uid) != '' and str(uid) != '\n':
+     if str(uid) != '' and str(uid) != '\n' and len(str(uid)) > 15:
           print 'Found card with UID: ' + str(uid)[:16]
           
           #beolvasott kod elkuldese a szervernek
@@ -67,6 +71,13 @@ while True:
 
           print printResToLcd(response)
           
+          wasprint = False
           lastRead = time.time()
+
+     if time.time()-lastRead >= 5 and not wasprint:
+          lcd.clear()
+          lcd.message("Erintsd a kartyat", 1)
+          lcd.message("      a leolvasohoz!",2)
+          wasprint = True
 
      time.sleep(0.1)
